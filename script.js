@@ -1,33 +1,64 @@
-const apiKey = "YOUR_API_KEY"; // Replace with your OpenWeatherMap API key
-const searchButton = document.getElementById("searchButton");
-const cityInput = document.getElementById("cityInput");
-const weatherDisplay = document.getElementById("weatherDisplay");
+function displayWeather(response) {
+  // Display current temperature
+  const temperatureElement = document.querySelector("#current-temperature");
+  const temperature = Math.round(response.data.main.temp);
+  temperatureElement.innerHTML = `${temperature} °C`;
 
-searchButton.addEventListener("click", async () => {
-  const city = cityInput.value.trim();
+  // Display city name
+  const cityElement = document.querySelector("#current-city");
+  cityElement.innerHTML = response.data.name;
+
+  // Display weather description
+  const weatherDescriptionElement = document.querySelector("#weather-description");
+  weatherDescriptionElement.innerHTML = response.data.weather[0].description;
+
+  // Display wind speed
+  const windSpeedElement = document.querySelector("#wind-speed");
+  windSpeedElement.innerHTML = `Wind Speed: ${Math.round(response.data.wind.speed)} km/h`;
+
+  // Display humidity
+  const humidityElement = document.querySelector("#humidity");
+  humidityElement.innerHTML = `${response.data.main.humidity}%`;
+
+  // Display weather icon
+  const weatherIconElement = document.querySelector("#weather-icon");
+  const iconUrl = `https://openweathermap.org/img/wn/${response.data.weather[0].icon}@2x.png`;
+  weatherIconElement.setAttribute("src", iconUrl);
+  weatherIconElement.setAttribute("alt", response.data.weather[0].description);
+}
+
+function search(event) {
+  event.preventDefault();
+  const searchInputElement = document.querySelector("#search-input");
+  const city = searchInputElement.value.trim();
+
   if (!city) {
-    alert("Please enter a city name.");
+    alert("Please enter a valid city name.");
     return;
   }
 
+  const apiKey = "6509abc2b7c4b101385d8dcd3c430520"; // Replace with your OpenWeatherMap API key
   const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
 
-  try {
-    const response = await fetch(apiUrl);
-    if (!response.ok) throw new Error("City not found");
-    const data = await response.json();
+  axios
+    .get(apiUrl)
+    .then(displayWeather)
+    .catch(() => alert("City not found! Please try again."));
+}
 
-    const { name, weather, main, wind } = data;
-    const iconUrl = `https://openweathermap.org/img/wn/${weather[0].icon}@2x.png`;
+function formatDate(date) {
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const hours = date.getHours().toString().padStart(2, "0");
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const formattedDay = days[date.getDay()];
 
-    weatherDisplay.innerHTML = `
-      <h2>${name}</h2>
-      <img src="${iconUrl}" alt="${weather[0].description}">
-      <p>${weather[0].description.toUpperCase()}</p>
-      <p>Temperature: ${main.temp}°C</p>
-      <p>Wind Speed: ${wind.speed} m/s</p>
-    `;
-  } catch (error) {
-    weatherDisplay.innerHTML = `<p>Error: ${error.message}</p>`;
-  }
-});
+  return `${formattedDay} ${hours}:${minutes}`;
+}
+
+// Display current date
+const currentDateElement = document.querySelector("#current-date");
+currentDateElement.innerHTML = formatDate(new Date());
+
+// Add event listener to search form
+const searchForm = document.querySelector("#search-form");
+searchForm.addEventListener("submit", search);
